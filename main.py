@@ -8,7 +8,7 @@ import tempfile
 import os
 
 # Load the Whisper model
-model = whisper.load_model("medium")
+model = whisper.load_model("base")
 
 # Ensure consistent language detection results
 DetectorFactory.seed = 0
@@ -109,19 +109,24 @@ def delete_temp_file(file_path):
     except Exception as e:
         print(f"Error deleting temporary file {file_path}: {e}")
 
-
-def main(path):
+#Function to handle the speech-to-text, text-to-text then text-to-speech logic
+def speech_to_speech(path):
+    #Choose the target language
     lang=('fr', 'en', 'ru', 'de')
     while True:
-        choice = int(input("Choose a language to translate the speech: \n1. French \n2. English \n3. Russian \n4.German\n"))
-        if (0<choice<=len(lang)):
-            target_lang = lang[choice-1]
-            break
-        else:
-            print("You must choose a number between 1 and 4!\n")
+        try:
+            choice = int(input("Choose a language to translate the speech: \n1. French \n2. English \n3. Russian \n4.German\n"))
+            if (0<choice<=len(lang)):
+                target_lang = lang[choice-1]
+                break
+            else:
+                print("Invalid number! Please choose between 1 and 4.\n")
+        except ValueError:
+            print("Invalid input! Please choose a number (1, 2, 3, or 4).\n")
+
     # Transcribe audio
     transcribed_text = transcribe_audio(path)
-    print(f"Transcribed Text: {transcribed_text}")
+    print(f"Transcribed Text: \n\n{transcribed_text}\n")
 
     #Play the transcripted text
     text_to_speech(transcribed_text, lang=detect(transcribed_text))
@@ -129,17 +134,42 @@ def main(path):
 
     # Translate text
     translated_text = translate_text(transcribed_text, target_language=target_lang)
-    print(f"Translated Text: {translated_text}")
+    print(f"Translated Text: \n\n{translated_text}\n")
 
     # Convert translated text to speech and play it
     text_to_speech(translated_text, lang=target_lang)
     print("**Translated text played.")
 
+def main():
+    while True:
+        try:
+            x = int(input('Choose an option: \n1. Translate an audio file \n2. Record an audio to translate \n'))
+            if 0<x<=2:
+                break
+            else:
+                print('Invalid number! Please choose between 1 or 2.')
+        except ValueError:
+            print('Invalid input! Please enter a number (1 or 2)')
+
+    if x == 1:
+        path = input('Provide the path to the audio file: \n')
+    else:
+        while True:
+            try:
+                y = int(input('How many seconds will the program record? : \n'))
+                break
+            except ValueError:
+                print('Invalid input! Please enter a valid number of seconds.')
+        path = record_audio(record_seconds=y)
+
+    speech_to_speech(path)
+    if x == 2:
+        delete_temp_file(path)
+
+
 
 if __name__ == "__main__":
     try:
-        path = record_audio(record_seconds=7)
-        main(path)
-        delete_temp_file(path)
+        main()
     except Exception as e:
         print("An error occurred:", e)
