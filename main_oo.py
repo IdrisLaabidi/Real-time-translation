@@ -2,6 +2,8 @@ import whisper
 from deep_translator import GoogleTranslator
 import pyttsx3
 from langdetect import detect, DetectorFactory
+import arabic_reshaper
+import bidi.algorithm
 import pyaudio
 import wave
 import tempfile
@@ -101,21 +103,26 @@ class RT_Translator:
 
     def speech_to_speech(self, path):
         # Choose the target language
-        lang = ('fr', 'en', 'ru', 'de')
+        lang = ('fr', 'en', 'ru', 'de', 'ar')
         while True:
             try:
-                choice = int(input("Choose a language to translate the speech: \n1. French \n2. English \n3. Russian \n4. German\n"))
+                choice = int(input("Choose a language to translate the speech: \n1. French \n2. English \n3. Russian \n4. German \n5. Arabic \n"))
                 if 0 < choice <= len(lang):
                     target_lang = lang[choice - 1]
                     break
                 else:
-                    print("Invalid number! Please choose between 1 and 4.\n")
+                    print("Invalid number! Please choose between 1 and 5.\n")
             except ValueError:
-                print("Invalid input! Please choose a number (1, 2, 3, or 4).\n")
+                print("Invalid input! Please choose a number (1, 2, 3, 4 or 5).\n")
 
         # Transcribe audio
         transcribed_text = self.transcribe_audio(path)
-        print(f"Transcribed Text: \n\n{transcribed_text}\n")
+        if detect(transcribed_text) == 'ar':
+            transcribed_text_ar = arabic_reshaper.reshape(transcribed_text)
+            transcribed_text_ar = bidi.algorithm.get_display(transcribed_text_ar)
+            print(f"Transcribed Text: \n\n{transcribed_text_ar}\n")
+        else:
+            print(f"Transcribed Text: \n\n{transcribed_text}\n")
 
         # Play the transcribed text
         self.text_to_speech(transcribed_text, lang=detect(transcribed_text))
@@ -123,7 +130,12 @@ class RT_Translator:
 
         # Translate text
         translated_text = self.translate_text(transcribed_text, target_language=target_lang)
-        print(f"-----------------------\nTranslated Text: \n\n{translated_text}\n")
+        if target_lang == 'ar':
+            translated_text_ar = arabic_reshaper.reshape(translated_text)
+            translated_text_ar = bidi.algorithm.get_display(translated_text_ar)
+            print(f"-----------------------\nTranslated Text: \n\n{translated_text_ar}\n")
+        else:
+            print(f"-----------------------\nTranslated Text: \n\n{translated_text_ar}\n")
 
         # Convert translated text to speech and play it
         self.text_to_speech(translated_text, lang=target_lang)
