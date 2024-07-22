@@ -135,7 +135,7 @@ class RT_Translator:
             translated_text_ar = bidi.algorithm.get_display(translated_text_ar)
             print(f"-----------------------\nTranslated Text: \n\n{translated_text_ar}\n")
         else:
-            print(f"-----------------------\nTranslated Text: \n\n{translated_text_ar}\n")
+            print(f"-----------------------\nTranslated Text: \n\n{translated_text}\n")
 
         # Convert translated text to speech and play it
         self.text_to_speech(translated_text, lang=target_lang)
